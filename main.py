@@ -32,30 +32,33 @@ for button in buttons:
 time.sleep(2)
 
 def tryRefresh(button):
-    if button.text.find("nieuwen") != -1: 
-        print("refresh")
-        actions.move_to_element(button).click().perform();
+    try :
+        if button.text.find("nieuwen") != -1: 
+            print("refresh")
+            actions.move_to_element(button).click().perform();
+    except:
+        None
+
     time.sleep(0.02)
     # Call the function again
-    threading.Timer(0.02, lambda: tryRefresh(refreshButton)).start()
+    threading.Timer(0.02, lambda: tryRefresh(button)).start()
 
 def tryBuy(driver):
     buttons = driver.find_elements(By.TAG_NAME, 'a')
+    buttons.extend(driver.find_elements(By.TAG_NAME, 'button'))
     buyButton = None
     for button in buttons:
         if button.text.find("kopen") != -1:
             buyButton = button
             print("Buy button found")
-        if button.text.find("serveerd") != -1:
-            print("Gereserveerd")
 
     if buyButton != None: 
         print("kopen")
         actions.move_to_element(buyButton).click().perform();
 
-    time.sleep(0.02)
+    time.sleep(0.005)
     # Call the function again
-    threading.Timer(0.02, lambda: tryBuy(driver)).start()
+    threading.Timer(0.005, lambda: tryBuy(driver)).start()
 
 iframes = driver.find_elements(By.TAG_NAME, 'iframe')
 for iframe in iframes:
