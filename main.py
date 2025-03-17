@@ -15,20 +15,23 @@ class Clicker:
     def __init__(self):
         self.driver = webdriver.Chrome(options=chrome_options) # Initialize the webdriver session
         self.actions = ActionChains(self.driver)
+        self.isBuying = False
 
         self.driver.get('https://www.4daagse.nl/meedoen/ticket-overdragen') # replaces "ie.navigate"
 
         js_script = '''\
-            for (element of document.getElementsByClassName('js-cookie-message')) {
-                element.style.display = 'none'
-            }
+            document.getElementById('CybotCookiebotDialogBodyUnderlay').style.display = 'none';
+            document.getElementById('CybotCookiebotDialog').style.display = 'none';
+            document.getElementsByTagName("body")[0].style.overflow = 'visible';
         '''
+        print("Cookie dialog hidden")
         self.driver.execute_script(js_script)
 
     # open modal
         buttons = self.driver.find_elements(By.CLASS_NAME, 'button')
         for button in buttons:
-            if button.text.find("beschikbare tickets") == -1: continue
+            if button.text.strip().find("Zoek ticket") == -1: continue
+            print("Zoek ticket button found")
             self.actions.move_to_element(button).click().perform();
 
         time.sleep(2)
@@ -39,22 +42,26 @@ class Clicker:
             buttons = self.driver.find_elements(By.TAG_NAME, 'a')
             refreshButton = None
             for button in buttons:
-                if button.text.find("gewerkt") != -1 or button.text.find("nieuwen") != -1: 
+                if button.text.find("gewerkt") != -1 or button.text.find("nieuwen") != -1 or button.text.find("fresh") != -1: 
                     refreshButton = button
 
+            self.tryBuy()
+            
             if refreshButton != None:
                 print("Refresh button found.")
                 self.tryRefresh(refreshButton)
-            
-            self.tryBuy()
 
     def tryRefresh(self, button):
         try :
-            if button.text.find("nieuwen") != -1: 
+            if button.text.find("nieuwen") != -1 or (button.text.find("Refresh") != -1 & button.text.find("Refreshed") == -1): 
                 print("refresh")
                 self.actions.move_to_element(button).click().perform();
         except:
-            None
+            if self.isBuying == False:
+                buttons = self.driver.find_elements(By.TAG_NAME, 'a')
+                for btn in buttons:
+                    if btn.text.find("gewerkt") != -1 or btn.text.find("nieuwen") != -1 or btn.text.find("fresh") != -1: 
+                        button = btn
 
         time.sleep(0.02)
         # Call the function again
@@ -66,12 +73,14 @@ class Clicker:
             buttons.extend(self.driver.find_elements(By.TAG_NAME, 'button'))
             buyButton = None
             for button in buttons:
-                if button.text.lower().find("kopen") != -1:
+                if button.text.lower().find("kopen") != -1 or button.text.lower().find("buy") != -1:
                     buyButton = button
                     print("Buy button found")
+                    self.isBuying = False
 
             if buyButton != None: 
                 print("kopen")
+                self.isBuying = True
                 self.actions.move_to_element(buyButton).click().perform()
         except:
             None
@@ -81,7 +90,7 @@ class Clicker:
         threading.Timer(0.005, self.tryBuy).start()
 
 refreshTimeout = 15
-nTryers = 2
+nTryers = 1
 
 for i in range(nTryers):
     threading.Timer(0, lambda: Clicker()).start()
