@@ -16,9 +16,12 @@ class Clicker:
         self.driver = webdriver.Chrome(options=chrome_options) # Initialize the webdriver session
         self.actions = ActionChains(self.driver)
         self.isBuying = False
+        self.buyingFailed = False
 
         self.driver.get('https://www.4daagse.nl/meedoen/ticket-overdragen') # replaces "ie.navigate"
 
+        time.sleep(2)
+        
         js_script = '''\
             document.getElementById('CybotCookiebotDialogBodyUnderlay').style.display = 'none';
             document.getElementById('CybotCookiebotDialog').style.display = 'none';
@@ -57,11 +60,13 @@ class Clicker:
                 print("refresh")
                 self.actions.move_to_element(button).click().perform();
         except:
-            if self.isBuying == False:
+            if self.isBuying == False and self.buyingFailed == True:
                 buttons = self.driver.find_elements(By.TAG_NAME, 'a')
                 for btn in buttons:
                     if btn.text.find("gewerkt") != -1 or btn.text.find("nieuwen") != -1 or btn.text.find("fresh") != -1: 
                         button = btn
+                        self.buyingFailed = False
+                        print("Refresh button found.")
 
         time.sleep(0.02)
         # Call the function again
@@ -76,12 +81,14 @@ class Clicker:
                 if button.text.lower().find("kopen") != -1 or button.text.lower().find("buy") != -1:
                     buyButton = button
                     print("Buy button found")
-                    self.isBuying = False
 
             if buyButton != None: 
                 print("kopen")
                 self.isBuying = True
                 self.actions.move_to_element(buyButton).click().perform()
+            else:
+                self.isBuying = False
+                self.buyingFailed = True
         except:
             None
 
